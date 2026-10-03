@@ -23,6 +23,8 @@ body {
   display: flex;
   justify-content: center;
   padding: 48px 16px;
+  touch-action: manipulation; /* без зума по двойному тапу */
+  overscroll-behavior: none;
 }
 
 .app {

@@ -129,3 +129,14 @@ render();
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
+
+// iOS игнорирует user-scalable=no — блокируем жесты зума
+document.addEventListener("gesturestart", (e) => e.preventDefault());
+document.addEventListener("gesturechange", (e) => e.preventDefault());
+document.addEventListener(
+  "touchmove",
+  (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+  },
+  { passive: false }
+);

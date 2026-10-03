@@ -1,4 +1,4 @@
-const CACHE = "dayplan-v1";
+const CACHE = "dayplan-v2";
 const ASSETS = [
   "./",
   "index.html",
@@ -23,9 +23,16 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
+// network-first: онлайн всегда свежая версия, офлайн — из кэша
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    caches.match(e.request).then((hit) => hit || fetch(e.request))
+    fetch(e.request)
+      .then((res) => {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(e.request, copy));
+        return res;
+      })
+      .catch(() => caches.match(e.request))
   );
 });
