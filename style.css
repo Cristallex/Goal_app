@@ -204,6 +204,46 @@ body {
   transform: scaleX(1);
 }
 
+/* кнопка редактирования */
+.edit-btn {
+  margin-left: auto;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #c3c7d4;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.edit-btn:hover {
+  color: var(--accent);
+  background: #f0f0fb;
+}
+
+.edit-btn svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+}
+
+/* инлайн-редактирование */
+.edit-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 15px;
+  padding: 6px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
 /* ---------- Пустое состояние ---------- */
 
 .empty-hint {
