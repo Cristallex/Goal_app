@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>План дня</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+    <header class="header">
+      <h1>План дня</h1>
+      <p class="date" id="date"></p>
+    </header>
+
+    <form class="add-form" id="addForm" autocomplete="off">
+      <input id="taskInput" type="text" placeholder="Что нужно сделать?" maxlength="200">
+      <button type="submit" class="add-btn">Добавить</button>
+    </form>
+
+    <ul class="task-list" id="taskList"></ul>
+
+    <section class="success-card" id="successCard" hidden>
+      <div class="success-icon" aria-hidden="true">
+        <svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24"/><path d="M15 27l7 7 15-15"/></svg>
+      </div>
+      <h2>Молодец, так держать!</h2>
+      <p class="success-sub">Хороший день!</p>
+
+      <button class="done-toggle" id="doneToggle" type="button" aria-expanded="false">
+        <span>Выполнено за сегодня · <b id="doneCount">0</b></span>
+        <svg class="chevron" viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg>
+      </button>
+      <div class="done-wrap" id="doneWrap">
+        <ul class="done-list" id="doneList"></ul>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
