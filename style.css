@@ -2,6 +2,7 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
 :root {
@@ -340,4 +341,26 @@ body {
   height: 14px;
   border-radius: 50%;
   background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l3 3 5-6' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/10px no-repeat;
+}
+
+/* ---------- Мобильная адаптация ---------- */
+
+@media (max-width: 520px) {
+  body {
+    padding: 20px 12px;
+    padding-top: max(20px, env(safe-area-inset-top));
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+
+  .header h1 { font-size: 28px; }
+
+  /* font-size >= 16px, чтобы iOS не зумил при фокусе */
+  .add-form input,
+  .task-text { font-size: 16px; }
+
+  .add-form input { padding: 14px 16px; }
+  .add-btn { padding: 14px 16px; }
+
+  .task { padding: 16px; }
+  .check { width: 28px; height: 28px; }
 }
