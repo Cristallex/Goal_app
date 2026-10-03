@@ -168,7 +168,9 @@ doneToggle.addEventListener("click", () => {
 render();
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
+  navigator.serviceWorker
+    .register("sw.js", { updateViaCache: "none" })
+    .then((reg) => reg.update());
 }
 
 // iOS игнорирует user-scalable=no — блокируем жесты зума
