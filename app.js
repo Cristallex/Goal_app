@@ -1,4 +1,5 @@
-const LS_KEY = "dayplan.v1";
+const LS_KEY = "dayplan.v2";
+const LS_KEY_OLD = "dayplan.v1";
 
 const dateEl = document.getElementById("date");
 const addForm = document.getElementById("addForm");
@@ -10,14 +11,33 @@ const doneWrap = document.getElementById("doneWrap");
 const doneList = document.getElementById("doneList");
 const doneCount = document.getElementById("doneCount");
 
-const todayKey = () => new Date().toISOString().slice(0, 10);
+const dayKey = (d) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const todayKey = () => dayKey(new Date());
+const tomorrowKey = () => dayKey(new Date(Date.now() + 864e5));
+
+function migrateTask(t) {
+  return {
+    id: t.id || crypto.randomUUID(),
+    text: t.text,
+    done: !!t.done,
+    date: t.date || todayKey(),
+    doneDate: t.done ? t.doneDate || todayKey() : null,
+  };
+}
 
 function load() {
   try {
     const s = JSON.parse(localStorage.getItem(LS_KEY));
-    if (s && s.date === todayKey() && Array.isArray(s.tasks)) return s;
+    if (s && Array.isArray(s.tasks)) {
+      return { tasks: s.tasks.map(migrateTask) };
+    }
+    const old = JSON.parse(localStorage.getItem(LS_KEY_OLD));
+    if (old && Array.isArray(old.tasks)) {
+      return { tasks: old.tasks.map(migrateTask) };
+    }
   } catch {}
-  return { date: todayKey(), tasks: [] };
+  return { tasks: [] };
 }
 
 function save() {
@@ -39,6 +59,13 @@ function makeTaskEl(task) {
   li.className = "task";
   li.dataset.id = task.id;
 
+  const hint = document.createElement("div");
+  hint.className = "swipe-hint";
+  hint.textContent = "→ На завтра";
+
+  const inner = document.createElement("div");
+  inner.className = "task-inner";
+
   const check = document.createElement("button");
   check.className = "check";
   check.type = "button";
@@ -58,13 +85,16 @@ function makeTaskEl(task) {
     '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
   editBtn.addEventListener("click", () => startEdit(task.id, li));
 
-  li.append(check, span, editBtn);
+  inner.append(check, span, editBtn);
+  li.append(hint, inner);
+  attachSwipe(li, inner, task.id);
   return li;
 }
 
 function render() {
-  const active = state.tasks.filter((t) => !t.done);
-  const done = state.tasks.filter((t) => t.done);
+  const today = todayKey();
+  const active = state.tasks.filter((t) => !t.done && t.date <= today);
+  const done = state.tasks.filter((t) => t.done && t.doneDate === today);
 
   taskList.innerHTML = "";
   for (const t of active) taskList.appendChild(makeTaskEl(t));
@@ -83,12 +113,18 @@ function render() {
 // ---------- Логика ----------
 
 function addTask(text) {
-  const task = { id: crypto.randomUUID(), text, done: false };
+  const task = {
+    id: crypto.randomUUID(),
+    text,
+    done: false,
+    date: todayKey(),
+    doneDate: null,
+  };
   state.tasks.push(task);
   save();
 
-  if (state.tasks.filter((t) => !t.done).length === 1) {
-    render();
+  if (state.tasks.filter((t) => !t.done && t.date <= todayKey()).length === 1) {
+    render(); // чтобы скрыть карточку успеха
   } else {
     const li = makeTaskEl(task);
     li.classList.add("enter");
@@ -141,11 +177,85 @@ function completeTask(id, li) {
 
     setTimeout(() => {
       const task = state.tasks.find((t) => t.id === id);
-      if (task) task.done = true;
+      if (task) {
+        task.done = true;
+        task.doneDate = todayKey();
+      }
       save();
       render();
     }, 420);
   }, 500);
+}
+
+function moveToTomorrow(id, li) {
+  // та же анимация схлопывания, что и при выполнении
+  li.style.height = li.offsetHeight + "px";
+  li.offsetHeight;
+  li.classList.add("leaving");
+
+  setTimeout(() => {
+    const task = state.tasks.find((t) => t.id === id);
+    if (task) task.date = tomorrowKey();
+    save();
+    render();
+  }, 420);
+}
+
+// свайп вправо -> перенос на завтра (pointer events: палец и мышь)
+function attachSwipe(li, inner, id) {
+  let startX = 0,
+    startY = 0,
+    dx = 0,
+    dragging = false,
+    decided = false;
+
+  li.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("button, input")) return;
+    if (li.classList.contains("completing")) return;
+    startX = e.clientX;
+    startY = e.clientY;
+    dx = 0;
+    dragging = true;
+    decided = false;
+  });
+
+  li.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const mx = e.clientX - startX;
+    const my = e.clientY - startY;
+    if (!decided) {
+      if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
+      if (mx > 0 && Math.abs(mx) > Math.abs(my)) {
+        decided = true;
+        li.setPointerCapture(e.pointerId);
+        li.classList.add("swiping", "dragging");
+      } else {
+        dragging = false;
+        return;
+      }
+    }
+    dx = Math.max(0, mx);
+    inner.style.transform = `translateX(${dx}px)`;
+  });
+
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    li.classList.remove("dragging");
+    if (decided && dx > li.offsetWidth * 0.35) {
+      inner.style.transform = `translateX(${li.offsetWidth + 30}px)`;
+      inner.style.opacity = "0";
+      setTimeout(() => moveToTomorrow(id, li), 260);
+    } else {
+      inner.style.transform = "";
+      li.classList.remove("swiping");
+    }
+    dx = 0;
+    decided = false;
+  };
+
+  li.addEventListener("pointerup", endDrag);
+  li.addEventListener("pointercancel", endDrag);
 }
 
 // ---------- События ----------
