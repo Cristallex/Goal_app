@@ -10,6 +10,8 @@ const doneToggle = document.getElementById("doneToggle");
 const doneWrap = document.getElementById("doneWrap");
 const doneList = document.getElementById("doneList");
 const doneCount = document.getElementById("doneCount");
+const settingsBtn = document.getElementById("settingsBtn");
+const themePanel = document.getElementById("themePanel");
 
 const dayKey = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -45,6 +47,38 @@ function save() {
 }
 
 let state = load();
+
+// ---------- Темы ----------
+
+const THEME_KEY = "dayplan.theme";
+
+function applyTheme(name) {
+  document.body.dataset.theme = name;
+  localStorage.setItem(THEME_KEY, name);
+  themePanel
+    .querySelectorAll("button")
+    .forEach((b) => b.classList.toggle("active", b.dataset.theme === name));
+}
+
+applyTheme(localStorage.getItem(THEME_KEY) || "base");
+
+settingsBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  themePanel.hidden = !themePanel.hidden;
+});
+
+themePanel.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-theme]");
+  if (!btn) return;
+  applyTheme(btn.dataset.theme);
+  themePanel.hidden = true;
+});
+
+document.addEventListener("click", (e) => {
+  if (!themePanel.hidden && !e.target.closest(".theme-panel, .settings-btn")) {
+    themePanel.hidden = true;
+  }
+});
 
 dateEl.textContent = new Date().toLocaleDateString("ru-RU", {
   weekday: "long",

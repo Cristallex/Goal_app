@@ -425,6 +425,263 @@ body {
   background: var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l3 3 5-6' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/10px no-repeat;
 }
 
+/* ---------- Переключатель тем ---------- */
+
+.settings-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 50;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 10px rgba(31, 36, 48, 0.10);
+  transition: transform 0.35s ease, box-shadow 0.2s;
+}
+
+.settings-btn:hover { transform: rotate(35deg); }
+.settings-btn:active { transform: rotate(35deg) scale(0.92); }
+
+.settings-btn svg {
+  width: 20px;
+  height: 20px;
+  fill: var(--text-dim);
+}
+
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.theme-panel {
+  position: fixed;
+  top: 66px;
+  right: 14px;
+  z-index: 50;
+  width: 235px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(31, 36, 48, 0.16);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: panel-in 0.2s ease;
+}
+
+.theme-panel[hidden] { display: none; }
+
+.theme-panel button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.theme-panel button span {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.theme-panel button:hover { background: #f3f4f8; }
+
+.theme-panel button.active {
+  background: #eef0fe;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* ---------- Тема: Минимализм ---------- */
+
+body[data-theme="minimal"] { --bg: #ffffff; }
+
+body[data-theme="minimal"] .header h1 {
+  font-size: 40px;
+  font-weight: 900;
+}
+
+body[data-theme="minimal"] .task-list { gap: 0; }
+
+body[data-theme="minimal"] .task-inner {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 16px 4px;
+}
+
+body[data-theme="minimal"] .swipe-hint { border-radius: 0; }
+
+body[data-theme="minimal"] .check {
+  border-color: #1f2430;
+  background: transparent;
+}
+
+body[data-theme="minimal"] .add-form input {
+  border: none;
+  border-bottom: 2px solid #1f2430;
+  border-radius: 0;
+  background: transparent;
+}
+
+body[data-theme="minimal"] .add-form input:focus {
+  box-shadow: none;
+  border-color: var(--accent);
+}
+
+body[data-theme="minimal"] .add-btn {
+  background: #1f2430;
+  border-radius: 8px;
+}
+
+body[data-theme="minimal"] .success-card {
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+body[data-theme="minimal"] .done-toggle {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+
+body[data-theme="minimal"] .theme-panel,
+body[data-theme="minimal"] .settings-btn {
+  border: 1px solid #1f2430;
+}
+
+/* ---------- Тема: Soft UI (неоморфизм) ---------- */
+
+body[data-theme="soft"] {
+  --bg: #e3e7ee;
+  --text: #3a4454;
+  --text-dim: #7a8397;
+}
+
+body[data-theme="soft"] .task-list { gap: 14px; }
+
+body[data-theme="soft"] .task-inner {
+  background: #e3e7ee;
+  border: none;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 7px 7px 14px #c3c9d4, -7px -7px 14px #ffffff;
+}
+
+body[data-theme="soft"] .swipe-hint {
+  border-radius: 18px;
+  background: #d5efdf;
+}
+
+body[data-theme="soft"] .check {
+  background: #e3e7ee;
+  border: none;
+  box-shadow: inset 3px 3px 6px #c3c9d4, inset -3px -3px 6px #ffffff;
+}
+
+body[data-theme="soft"] .check:hover {
+  transform: none;
+  box-shadow: 3px 3px 8px #c3c9d4, -3px -3px 8px #ffffff;
+}
+
+body[data-theme="soft"] .task.completing .check {
+  background: var(--green);
+  box-shadow: inset 2px 2px 5px rgba(0, 0, 0, 0.25);
+}
+
+body[data-theme="soft"] .add-form input {
+  background: #e3e7ee;
+  border: none;
+  border-radius: 16px;
+  box-shadow: inset 4px 4px 10px #c3c9d4, inset -4px -4px 10px #ffffff;
+}
+
+body[data-theme="soft"] .add-form input:focus { box-shadow: inset 4px 4px 10px #c3c9d4, inset -4px -4px 10px #ffffff, 0 0 0 3px rgba(99, 102, 241, 0.2); }
+
+body[data-theme="soft"] .add-btn {
+  border-radius: 16px;
+  box-shadow: 5px 5px 12px #c3c9d4, -5px -5px 12px #ffffff;
+}
+
+body[data-theme="soft"] .success-card {
+  background: #e3e7ee;
+  border: none;
+  border-radius: 22px;
+  box-shadow: 8px 8px 18px #c3c9d4, -8px -8px 18px #ffffff;
+}
+
+body[data-theme="soft"] .done-toggle {
+  background: #e3e7ee;
+  border: none;
+  border-radius: 14px;
+  box-shadow: inset 3px 3px 8px #c3c9d4, inset -3px -3px 8px #ffffff;
+}
+
+body[data-theme="soft"] .settings-btn,
+body[data-theme="soft"] .theme-panel {
+  background: #e3e7ee;
+  border: none;
+  box-shadow: 5px 5px 12px #c3c9d4, -5px -5px 12px #ffffff;
+}
+
+body[data-theme="soft"] .theme-panel button:hover { background: #dde2ec; }
+body[data-theme="soft"] .theme-panel button.active { background: #d8ddf7; box-shadow: inset 0 0 0 2px var(--accent); }
+
+/* ---------- Тема: Карточки ---------- */
+
+body[data-theme="cards"] { --bg: #eceff4; }
+
+body[data-theme="cards"] .task-list { gap: 14px; }
+
+body[data-theme="cards"] .task-inner {
+  border: none;
+  border-left: 5px solid var(--accent);
+  border-radius: 18px;
+  padding: 18px 16px;
+  box-shadow: 0 6px 18px rgba(31, 36, 48, 0.09);
+}
+
+/* цветные акценты по кругу — разные «типы» дел */
+body[data-theme="cards"] .task:nth-child(4n + 2) .task-inner { border-left-color: #f59e0b; }
+body[data-theme="cards"] .task:nth-child(4n + 3) .task-inner { border-left-color: #22c55e; }
+body[data-theme="cards"] .task:nth-child(4n + 4) .task-inner { border-left-color: #ec4899; }
+
+body[data-theme="cards"] .swipe-hint { border-radius: 18px; }
+
+body[data-theme="cards"] .add-form input {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(31, 36, 48, 0.07);
+}
+
+body[data-theme="cards"] .add-btn { border-radius: 14px; }
+
+body[data-theme="cards"] .success-card {
+  border: none;
+  border-radius: 22px;
+  box-shadow: 0 14px 36px rgba(34, 197, 94, 0.16);
+}
+
+body[data-theme="cards"] .done-toggle {
+  border: none;
+  border-radius: 14px;
+  box-shadow: 0 3px 10px rgba(31, 36, 48, 0.07);
+}
+
 /* ---------- Мобильная адаптация ---------- */
 
 @media (max-width: 520px) {
