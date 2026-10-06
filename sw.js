@@ -1,4 +1,4 @@
-const CACHE = "dayplan-v2";
+const CACHE = "dayplan-v3";
 const ASSETS = [
   "./",
   "index.html",
@@ -23,16 +23,20 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// network-first: онлайн всегда свежая версия, офлайн — из кэша
+// stale-while-revalidate: мгновенно из кэша (офлайн/мёртвая сеть не страшны),
+// свежая версия докачивается в фоне и подхватится при следующем открытии
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
-    fetch(e.request)
-      .then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
-        return res;
-      })
-      .catch(() => caches.match(e.request))
+    caches.match(e.request).then((hit) => {
+      const net = fetch(e.request)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(e.request, copy));
+          return res;
+        })
+        .catch(() => hit);
+      return hit || net;
+    })
   );
 });
