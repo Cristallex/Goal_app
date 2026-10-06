@@ -12,6 +12,7 @@ const doneList = document.getElementById("doneList");
 const doneCount = document.getElementById("doneCount");
 const settingsBtn = document.getElementById("settingsBtn");
 const themePanel = document.getElementById("themePanel");
+const navBtn = document.getElementById("navBtn");
 
 const dayKey = (d) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -47,6 +48,7 @@ function save() {
 }
 
 let state = load();
+let viewDate = todayKey(); // какой день смотрим
 
 // ---------- Темы ----------
 
@@ -78,12 +80,6 @@ document.addEventListener("click", (e) => {
   if (!themePanel.hidden && !e.target.closest(".theme-panel, .settings-btn")) {
     themePanel.hidden = true;
   }
-});
-
-dateEl.textContent = new Date().toLocaleDateString("ru-RU", {
-  weekday: "long",
-  day: "numeric",
-  month: "long",
 });
 
 // ---------- Рендер ----------
@@ -119,7 +115,15 @@ function makeTaskEl(task) {
     '<svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>';
   editBtn.addEventListener("click", () => startEdit(task.id, li));
 
-  inner.append(check, span, editBtn);
+  const delBtn = document.createElement("button");
+  delBtn.className = "del-btn";
+  delBtn.type = "button";
+  delBtn.setAttribute("aria-label", "Удалить задачу");
+  delBtn.innerHTML =
+    '<svg viewBox="0 0 24 24"><path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>';
+  delBtn.addEventListener("click", () => deleteTask(task.id, li));
+
+  inner.append(check, span, editBtn, delBtn);
   li.append(hint, inner);
   attachSwipe(li, inner, task.id);
   return li;
@@ -127,8 +131,15 @@ function makeTaskEl(task) {
 
 function render() {
   const today = todayKey();
-  const active = state.tasks.filter((t) => !t.done && t.date <= today);
-  const done = state.tasks.filter((t) => t.done && t.doneDate === today);
+  const viewingToday = viewDate === today;
+  // сегодня показываем всё невыполненное (включая перенесённое с прошлых дней),
+  // на будущих днях — только задачи этого дня
+  const active = state.tasks.filter(
+    (t) => !t.done && (viewingToday ? t.date <= today : t.date === viewDate)
+  );
+  const done = viewingToday
+    ? state.tasks.filter((t) => t.done && t.doneDate === today)
+    : [];
 
   taskList.innerHTML = "";
   for (const t of active) taskList.appendChild(makeTaskEl(t));
@@ -141,7 +152,16 @@ function render() {
   }
   doneCount.textContent = done.length;
 
-  successCard.hidden = active.length > 0 || done.length === 0;
+  successCard.hidden = !viewingToday || active.length > 0 || done.length === 0;
+
+  const d = new Date(viewDate + "T00:00:00");
+  dateEl.textContent =
+    d.toLocaleDateString("ru-RU", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+    }) + (viewingToday ? "" : " · завтра");
+  navBtn.textContent = viewingToday ? "Следующий день →" : "← Сегодня";
 }
 
 // ---------- Логика ----------
@@ -151,13 +171,19 @@ function addTask(text) {
     id: crypto.randomUUID(),
     text,
     done: false,
-    date: todayKey(),
+    date: viewDate,
     doneDate: null,
   };
   state.tasks.push(task);
   save();
 
-  if (state.tasks.filter((t) => !t.done && t.date <= todayKey()).length === 1) {
+  const today = todayKey();
+  const viewingToday = viewDate === today;
+  const visible = state.tasks.filter(
+    (t) => !t.done && (viewingToday ? t.date <= today : t.date === viewDate)
+  ).length;
+
+  if (visible === 1) {
     render(); // чтобы скрыть карточку успеха
   } else {
     const li = makeTaskEl(task);
@@ -213,7 +239,7 @@ function completeTask(id, li) {
       const task = state.tasks.find((t) => t.id === id);
       if (task) {
         task.done = true;
-        task.doneDate = todayKey();
+        task.doneDate = viewDate;
       }
       save();
       render();
@@ -235,6 +261,18 @@ function moveToTomorrow(id, li) {
   }, 420);
 }
 
+function deleteTask(id, li) {
+  li.style.height = li.offsetHeight + "px";
+  li.offsetHeight;
+  li.classList.add("leaving");
+
+  setTimeout(() => {
+    state.tasks = state.tasks.filter((t) => t.id !== id);
+    save();
+    render();
+  }, 420);
+}
+
 // свайп вправо -> перенос на завтра (pointer events: палец и мышь)
 function attachSwipe(li, inner, id) {
   let startX = 0,
@@ -244,6 +282,7 @@ function attachSwipe(li, inner, id) {
     decided = false;
 
   li.addEventListener("pointerdown", (e) => {
+    if (viewDate !== todayKey()) return; // свайп только на сегодняшнем экране
     if (e.target.closest("button, input")) return;
     if (li.classList.contains("completing")) return;
     startX = e.clientX;
@@ -301,6 +340,11 @@ addForm.addEventListener("submit", (e) => {
   addTask(text);
   taskInput.value = "";
   taskInput.focus();
+});
+
+navBtn.addEventListener("click", () => {
+  viewDate = viewDate === todayKey() ? tomorrowKey() : todayKey();
+  render();
 });
 
 doneToggle.addEventListener("click", () => {

@@ -269,6 +269,53 @@ body {
   fill: currentColor;
 }
 
+/* кнопка удаления */
+.del-btn {
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #c3c7d4;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: color 0.2s, background 0.2s;
+}
+
+.del-btn:hover {
+  color: #ef4444;
+  background: #fdf0f0;
+}
+
+.del-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+}
+
+/* плавающая вкладка «Следующий день» */
+.nav-btn {
+  position: fixed;
+  right: 16px;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 50;
+  padding: 13px 20px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 6px 18px rgba(99, 102, 241, 0.35);
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.nav-btn:hover { background: var(--accent-dark); }
+.nav-btn:active { transform: scale(0.95); }
+
 /* инлайн-редактирование */
 .edit-input {
   flex: 1;
