@@ -19,6 +19,21 @@ const dayKey = (d) =>
 const todayKey = () => dayKey(new Date());
 const tomorrowKey = () => dayKey(new Date(Date.now() + 864e5));
 
+const shiftKey = (key, days) => {
+  const d = new Date(key + "T00:00:00");
+  d.setDate(d.getDate() + days);
+  return dayKey(d);
+};
+
+const dayLabel = (key) => {
+  if (key === todayKey()) return "Сегодня";
+  if (key === tomorrowKey()) return "Завтра";
+  return new Date(key + "T00:00:00").toLocaleDateString("ru-RU", {
+    day: "numeric",
+    month: "long",
+  });
+};
+
 function migrateTask(t) {
   return {
     id: t.id || crypto.randomUUID(),
@@ -89,9 +104,13 @@ function makeTaskEl(task) {
   li.className = "task";
   li.dataset.id = task.id;
 
-  const hint = document.createElement("div");
-  hint.className = "swipe-hint";
-  hint.textContent = "→ На завтра";
+  const hintR = document.createElement("div");
+  hintR.className = "swipe-hint right";
+  hintR.textContent = "→ " + dayLabel(shiftKey(viewDate, 1));
+
+  const hintL = document.createElement("div");
+  hintL.className = "swipe-hint left";
+  hintL.textContent = "← " + dayLabel(shiftKey(viewDate, -1));
 
   const inner = document.createElement("div");
   inner.className = "task-inner";
@@ -124,7 +143,7 @@ function makeTaskEl(task) {
   delBtn.addEventListener("click", () => deleteTask(task.id, li));
 
   inner.append(check, span, editBtn, delBtn);
-  li.append(hint, inner);
+  li.append(hintR, hintL, inner);
   attachSwipe(li, inner, task.id);
   return li;
 }
@@ -247,7 +266,7 @@ function completeTask(id, li) {
   }, 500);
 }
 
-function moveToTomorrow(id, li) {
+function moveTask(id, li, targetDate) {
   // та же анимация схлопывания, что и при выполнении
   li.style.height = li.offsetHeight + "px";
   li.offsetHeight;
@@ -255,7 +274,7 @@ function moveToTomorrow(id, li) {
 
   setTimeout(() => {
     const task = state.tasks.find((t) => t.id === id);
-    if (task) task.date = tomorrowKey();
+    if (task) task.date = targetDate;
     save();
     render();
   }, 420);
@@ -273,7 +292,7 @@ function deleteTask(id, li) {
   }, 420);
 }
 
-// свайп вправо -> перенос на завтра (pointer events: палец и мышь)
+// свайп: вправо -> день вперёд, влево -> день назад (pointer events: палец и мышь)
 function attachSwipe(li, inner, id) {
   let startX = 0,
     startY = 0,
@@ -282,7 +301,6 @@ function attachSwipe(li, inner, id) {
     decided = false;
 
   li.addEventListener("pointerdown", (e) => {
-    if (viewDate !== todayKey()) return; // свайп только на сегодняшнем экране
     if (e.target.closest("button, input")) return;
     if (li.classList.contains("completing")) return;
     startX = e.clientX;
@@ -298,7 +316,7 @@ function attachSwipe(li, inner, id) {
     const my = e.clientY - startY;
     if (!decided) {
       if (Math.abs(mx) < 8 && Math.abs(my) < 8) return;
-      if (mx > 0 && Math.abs(mx) > Math.abs(my)) {
+      if (Math.abs(mx) > Math.abs(my)) {
         decided = true;
         li.setPointerCapture(e.pointerId);
         li.classList.add("swiping", "dragging");
@@ -307,7 +325,7 @@ function attachSwipe(li, inner, id) {
         return;
       }
     }
-    dx = Math.max(0, mx);
+    dx = mx;
     inner.style.transform = `translateX(${dx}px)`;
   });
 
@@ -315,10 +333,27 @@ function attachSwipe(li, inner, id) {
     if (!dragging) return;
     dragging = false;
     li.classList.remove("dragging");
-    if (decided && dx > li.offsetWidth * 0.35) {
-      inner.style.transform = `translateX(${li.offsetWidth + 30}px)`;
-      inner.style.opacity = "0";
-      setTimeout(() => moveToTomorrow(id, li), 260);
+    if (decided && Math.abs(dx) > li.offsetWidth * 0.35) {
+      const days = dx > 0 ? 1 : -1;
+      const target = shiftKey(viewDate, days);
+      const viewingToday = viewDate === todayKey();
+      // если после переноса задача останется видимой на этом экране — просто вернуть
+      const stillVisible = viewingToday
+        ? target <= viewDate
+        : target === viewDate;
+      if (stillVisible) {
+        const task = state.tasks.find((t) => t.id === id);
+        if (task) {
+          task.date = target;
+          save();
+        }
+        inner.style.transform = "";
+        li.classList.remove("swiping");
+      } else {
+        inner.style.transform = `translateX(${(dx > 0 ? 1 : -1) * (li.offsetWidth + 30)}px)`;
+        inner.style.opacity = "0";
+        setTimeout(() => moveTask(id, li, target), 260);
+      }
     } else {
       inner.style.transform = "";
       li.classList.remove("swiping");

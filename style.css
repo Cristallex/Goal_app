@@ -131,6 +131,12 @@ body {
   transition: opacity 0.2s;
 }
 
+.swipe-hint.left {
+  justify-content: flex-end;
+  color: #ef9f44;
+  background: #fdf3e4;
+}
+
 .task.swiping .swipe-hint {
   opacity: 1;
 }
